@@ -1,0 +1,49 @@
+version: "3.0"
+
+services:
+  smart_mocks:
+    build:
+        context: .
+        dockerfile: Dockerfile.dev
+    hostname: smartmocks
+    environment:
+        KAFKA_SERVER: "kafka1:9092"
+        USER_ID: "someuuuuid" # Change this to be your unique user name
+    networks:
+      - hack
+    entrypoint: bash -c "python3 /app/mocks.py weather"
+
+  ir:
+    build:
+        context: .
+        dockerfile: Dockerfile.dev
+    hostname: ir
+    environment:
+        KAFKA_SERVER: "kafka1:9092"
+        USER_ID: "someuuuuid" # Change this to be your unique user name
+    networks:
+      - hack
+    entrypoint: bash -c "python3 /app/mocks.py ir"
+
+  my_application:
+    build:
+        context: .
+        dockerfile: Dockerfile.dev
+    hostname: myapplication
+    environment:
+      KAFKA_SERVER: "kafka1:9092"
+      USER_ID: "someuuuuid" # Change this to be your unique user name
+      SMART_APPS: '["weather"]'
+    ports:
+      - "8888:8080"
+    depends_on:
+      - smart_mocks
+      - ir
+    networks:
+      - hack
+    entrypoint: bash -c "python3 /app/manage.py"
+
+
+networks:
+  hack:
+    external: true

@@ -1,0 +1,15 @@
+FROM python:3.8-alpine
+
+ENV LIBRD_VER=1.6.0
+
+RUN echo "http://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+RUN apk --update --upgrade add gcc musl-dev git curl bash
+RUN apk add --no-cache --virtual .make-deps bash make wget g++ && apk add --no-cache musl-dev zlib-dev openssl zstd-dev pkgconfig libc-dev && wget https://github.com/edenhill/librdkafka/archive/v${LIBRD_VER}.tar.gz && tar -xvf v${LIBRD_VER}.tar.gz && cd librdkafka-${LIBRD_VER} && ./configure --prefix /usr && make && make install && make clean && rm -rf librdkafka-${LIBRD_VER} && rm -rf v${LIBRD_VER}.tar.gz && apk del .make-deps
+RUN pip install pip-tools
+
+WORKDIR /app
+
+ADD requirements.in /app/
+RUN pip-compile requirements.in && pip install -r requirements.txt
+ADD config.py /app/
+ADD . /app/
